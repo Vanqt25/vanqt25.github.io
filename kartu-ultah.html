@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kartu Ulang Tahun</title>
+
+<style>
+:root{
+  --bg1:#FFF1F5;
+  --bg2:#FFE4EC;
+  --accent:#f4c1cf;
+  --text:#073d3d;
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;height:100%;
+  font-family:Inter,system-ui,sans-serif;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+
+/* ===== OPENING ===== */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(255,255,255,.45);
+  backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:10;
+}
+.modal{
+  background:#fff;
+  padding:28px;
+  border-radius:18px;
+  width:90%;max-width:520px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+.inputName{
+  width:70%;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid #ddd;
+}
+.btn{
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:10px 16px;
+  margin:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn.ghost{
+  background:none;
+  color:var(--accent);
+  border:1px solid var(--accent);
+}
+
+/* ===== MAIN ===== */
+.wrap{display:none;max-width:900px;margin:30px auto;padding:18px}
+.card{
+  background:#fff;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 10px 25px rgba(0,0,0,.1);
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.title{font-size:22px}
+.name{font-size:40px;font-weight:800}
+
+.cake{margin:20px auto;display:none}
+
+/* ===== BALLOON ===== */
+.balloon{
+  position:fixed;
+  bottom:-80px;
+  width:40px;
+  height:50px;
+  border-radius:50%;
+  animation:floatUp linear forwards;
+  opacity:.9;
+}
+@keyframes floatUp{
+  to{transform:translateY(-120vh);opacity:0}
+}
+
+/* ===== CONFETTI ===== */
+.confetti{
+  position:fixed;
+  width:8px;
+  height:12px;
+  top:-20px;
+  animation:fall linear forwards;
+}
+@keyframes fall{
+  to{transform:translateY(120vh) rotate(360deg)}
+}
+
+/* ===== SPARKLE ===== */
+.sparkle{
+  position:fixed;
+  width:6px;
+  height:6px;
+  background:gold;
+  border-radius:50%;
+  animation:spark 1.2s ease-out forwards;
+}
+@keyframes spark{
+  to{transform:scale(0);opacity:0}
+}
+
+/* ===== SECRET ===== */
+.hidden-card{
+  position:fixed;
+  left:50%;top:55%;
+  transform:translate(-50%,-50%);
+  background:#fff;
+  padding:22px;
+  border-radius:16px;
+  width:90%;max-width:520px;
+  display:none;
+  z-index:30;
+}
+.type-box{
+  white-space:pre-wrap;
+  line-height:1.6;
+  color:var(--text);
+}
+.cursor{
+  width:2px;height:1em;
+  background:var(--text);
+  display:inline-block;
+  animation:blink 1s infinite;
+}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+
+<body>
+
+<!-- OPENING -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Hi 👋</h2>
+    <p>Ini hadiah kecil dari gua, lihat sampai akhir ya 🎂</p>
+    <input id="starterName" class="inputName" placeholder="Nama kamu">
+    <div>
+      <button class="btn" id="openBtn">Buka 🎀</button>
+      <button class="btn ghost" id="skipBtn">Lewati</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="wrap" id="mainWrap">
+  <div class="card">
+    <div class="title">Happy Birthday 🎉</div>
+    <div class="name" id="cardName">Teman</div>
+
+    <div class="cake" id="cakeBlock">
+      <svg width="220" height="140" viewBox="0 0 220 140">
+        <rect x="30" y="70" width="160" height="50" rx="12" fill="#FFD6E0"/>
+        <rect x="50" y="50" width="120" height="24" rx="10" fill="#FFB3C6"/>
+        <rect x="70" y="30" width="80" height="24" rx="8" fill="#FFE5EC"/>
+
+        <g id="candles">
+          <rect x="90" y="16" width="8" height="26" rx="4" fill="#FFD3AF"/>
+          <ellipse class="flame" cx="94" cy="10" rx="5" ry="7" fill="#FF7B7B"/>
+          <rect x="122" y="16" width="8" height="26" rx="4" fill="#FFD3AF"/>
+          <ellipse class="flame" cx="126" cy="10" rx="5" ry="7" fill="#FF7B7B"/>
+        </g>
+
+        <circle cx="110" cy="26" r="6" fill="#C1121F"/>
+        <path d="M110 26 C112 20,118 18,120 16"
+              stroke="#2D6A4F" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+
+    <button class="btn" id="blowBtn">Tiup Lilin 🎂</button>
+  </div>
+</div>
+
+<!-- SECRET -->
+<div class="hidden-card" id="hiddenCard">
+  <strong>Pesan</strong>
+  <div class="type-box" id="typedMessage"></div>
+  <span class="cursor" id="cursor"></span>
+</div>
+
+<script>
+'use strict'
+const $ = id => document.getElementById(id)
+
+/* DOM */
+const openBtn = $('openBtn')
+const skipBtn = $('skipBtn')
+const blowBtn = $('blowBtn')
+const starterName = $('starterName')
+const cardName = $('cardName')
+const cakeBlock = $('cakeBlock')
+const mainWrap = $('mainWrap')
+const overlay = $('overlay')
+const hiddenCard = $('hiddenCard')
+const typedMessage = $('typedMessage')
+const cursor = $('cursor')
+
+/* EDIT PESAN DI SINI */
+const secretMessage = `Hai call. 
+Happy birthday yaa. I hope this new year gives you more confidence, peace of mind, and chances to reach the things you’re aiming for. Wishing you all the best.
+
+Oh iyaa ada beberapa pesan juga buat lu,gua mau ngucapin makasih ya kemarin - kemarin lu udah mau jadi temen cerita gua, walaupun akhir - akhir ini kayaknya lu lagi sibuk tentang apapun itu lah, gua cuma mau kasih pesan kalo lu butuh temen cerita lu bisa aja kok cerita ke gua karna kemarin - kemarin ini lu selalu mau dengerin cerita aneh gua tapi kalo lu gak mau gapapa juga sii.
+
+Dan mungkin kalo lu bukan sibuk dan malah ada hal lain kayak lu risih gua chat trus lu bilang aja yaa.
+
+Oke deh jadi gituu aja pesan dari gua call dan ini anggap aja buat hadiah ulang tahun lu hehehe:)`
+
+openBtn.onclick = ()=>{
+  const n = starterName.value || 'Teman'
+  cardName.textContent = n
+  cakeBlock.style.display = 'block'
+  mainWrap.style.display = 'block'
+  overlay.style.display = 'none'
+}
+
+skipBtn.onclick = ()=>{
+  mainWrap.style.display = 'block'
+  overlay.style.display = 'none'
+}
+
+blowBtn.onclick = ()=>{
+  document.querySelectorAll('.flame').forEach(f=>{
+    f.style.transition='opacity 1s ease, transform 1s ease'
+    f.style.opacity='0'
+    f.style.transform='scale(0.2)'
+  })
+
+  startBalloons()
+  startConfetti()
+  startSparkle()
+
+  setTimeout(()=>{
+    blowBtn.textContent='Di Baca Yaa 💌'
+    blowBtn.onclick = ()=>{
+      hiddenCard.style.display='block'
+      typeSecret(secretMessage)
+    }
+  },1800)
+}
+
+/* EFFECTS */
+function startBalloons(){
+  for(let i=0;i<12;i++){
+    const b=document.createElement('div')
+    b.className='balloon'
+    b.style.left=Math.random()*100+'%'
+    b.style.background=['#FFB6C1','#AEEEEE','#FFD700'][i%3]
+    b.style.animationDuration=6+Math.random()*3+'s'
+    document.body.appendChild(b)
+    setTimeout(()=>b.remove(),9000)
+  }
+}
+
+function startConfetti(){
+  for(let i=0;i<40;i++){
+    const c=document.createElement('div')
+    c.className='confetti'
+    c.style.left=Math.random()*100+'%'
+    c.style.background=['#FFD9E0','#BEEBD8','#A8E6FF'][i%3]
+    c.style.animationDuration=4+Math.random()*3+'s'
+    document.body.appendChild(c)
+    setTimeout(()=>c.remove(),8000)
+  }
+}
+
+function startSparkle(){
+  for(let i=0;i<20;i++){
+    const s=document.createElement('div')
+    s.className='sparkle'
+    s.style.left=Math.random()*100+'%'
+    s.style.top=Math.random()*100+'%'
+    document.body.appendChild(s)
+    setTimeout(()=>s.remove(),1200)
+  }
+}
+
+/* TYPING */
+function typeSecret(text){
+  typedMessage.textContent=''
+  cursor.style.display='inline-block'
+  let i=0
+  const iv=setInterval(()=>{
+    if(i<text.length) typedMessage.textContent+=text[i++]
+    else{clearInterval(iv);cursor.style.display='none'}
+  },45)
+}
+</script>
+
+</body>
+</html>
